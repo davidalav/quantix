@@ -33,3 +33,23 @@ Quantix can be used for:
 3. Quantix analyzes the page structure
 4. The system extracts required information
 5. Data is returned in a structured format
+
+## Usage
+
+This script prints a status report for the Quantix project, showing which
+components are done and which are still TODO.
+
+Run it with:
+
+```bash
+python3 main.py
+```
+
+Or, if it's executable:
+
+```bash
+./main.py
+```
+
+The script exits with a code equal to the number of components still
+remaining (0 means everything is ready).

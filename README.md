@@ -53,3 +53,26 @@ Or, if it's executable:
 
 The script exits with a code equal to the number of components still
 remaining (0 means everything is ready).
+
+## Backend
+
+The backend is built with **FastAPI**.
+
+- `GET /` — home route, returns a welcome message about the project status.
+- `GET /health` — health-check route, returns JSON like `{"status": "ok", "project": "quantix"}`.
+
+## Running
+
+Install dependencies and start the server:
+
+\`\`\`bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+uvicorn routes:app --reload
+\`\`\`
+
+Once running:
+- Home page: http://127.0.0.1:8000
+- Health check: http://127.0.0.1:8000/health
+- Interactive docs (Swagger): http://127.0.0.1:8000/docs

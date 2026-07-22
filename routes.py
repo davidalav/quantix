@@ -1,14 +1,24 @@
-from fastapi import FastAPI
+from fastapi import APIRouter
 
-app = FastAPI()
+router = APIRouter()
 
-@app.get("/")
+@router.get("/")
 def home():
     return {"message": "Quantix backend is alive!"}
 
-@app.get("/health")
+@router.get("/health")
 def health():
     return {
         "status": "ok",
         "project": "quantix"
+    }
+
+@router.get("/scraped-data")
+def scrapedData():
+    return {
+        "data": {
+            "item": "phone",
+            "price": "100$"
+        },
+        "scraped_at": "2026-07-22"
     }

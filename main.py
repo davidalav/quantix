@@ -1,5 +1,13 @@
 #!/usr/bin/env python3
 
+import os
+import uvicorn
+from fastapi import FastAPI
+from routes import router
+
+app = FastAPI()
+app.include_router(router)
+
 def summarize(components):
     not_ready = 0
     for item in components:
@@ -33,4 +41,5 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run("main:app", host="127.0.0.1", port=port, reload=True)

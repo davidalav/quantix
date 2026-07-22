@@ -1,0 +1,14 @@
+from fastapi import FastAPI
+
+app = FastAPI()
+
+@app.get("/")
+def home():
+    return {"message": "Quantix backend is alive!"}
+
+@app.get("/health")
+def health():
+    return {
+        "status": "ok",
+        "project": "quantix"
+    }

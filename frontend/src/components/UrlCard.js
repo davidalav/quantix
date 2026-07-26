@@ -1,7 +1,7 @@
 import styled from "styled-components";
 
 
-export default function UrlCard(){
+export default function UrlCard({ onLoginClick }){
 
     return (
         <Card>
@@ -10,7 +10,7 @@ export default function UrlCard(){
             </h3>
             <Row>
                 <Input placeholder="https://example.com"/>
-                <Button>
+                <Button onClick={onLoginClick}>
                     Analyze
                 </Button>
             </Row>

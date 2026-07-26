@@ -1,5 +1,4 @@
-from fastapi import APIRouter, Request, status, Depends, HTTPException
-from pydantic import BaseModel, EmailStr
+from fastapi import APIRouter, status, Depends, HTTPException
 from db import Session, UserCreate, UserResponse, UserDB, get_db
 
 router = APIRouter()

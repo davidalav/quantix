@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
 from sqlalchemy import create_engine, Column, Integer, String
-from sqlalchemy.orm import sessionmaker, declarative_base, Session  # Добавили импорт Session для типов
+from sqlalchemy.orm import sessionmaker, declarative_base
 from pydantic import BaseModel, EmailStr
 
 load_dotenv()
@@ -15,7 +15,6 @@ engine = create_engine(DB_URL)
 SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False)
 Base = declarative_base()
 
-# Зависимость для получения сессии БД в роутах
 def get_db():
     db = SessionLocal()
     try:

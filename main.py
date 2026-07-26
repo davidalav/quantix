@@ -29,7 +29,7 @@ def main():
         {"name": "CI pipeline",   "done": False},
     ]
 
-    print(f"=== Статус {project} ===")
+    print(f"=== Status {project} ===")
     remaining = summarize(components)
 
     if remaining == 0:

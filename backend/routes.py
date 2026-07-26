@@ -1,5 +1,5 @@
 from fastapi import APIRouter, status, Depends, HTTPException
-from db import Session, UserCreate, UserResponse, UserDB, get_db
+from backend.db import Session, UserCreate, UserResponse, UserDB, get_db
 
 router = APIRouter()
 

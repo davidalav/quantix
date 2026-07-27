@@ -1,5 +1,7 @@
-import GlobalStyle from "@/styles/GlobalStyle";
+import GlobalStyle from "@/app/GlobalStyle";
 import StyledComponentsRegistry from "@/lib/registry";
+import { AuthProvider } from "@/context/AuthContext";
+import QueryProvider from "@/providers/QueryProvider";
 
 export const metadata = {
   title: "Quantix",
@@ -11,8 +13,12 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body>
         <StyledComponentsRegistry>
-          <GlobalStyle />
-          {children}
+          <QueryProvider>
+            <AuthProvider>
+              <GlobalStyle />
+              {children}
+            </AuthProvider>
+          </QueryProvider>
         </StyledComponentsRegistry>
       </body>
     </html>

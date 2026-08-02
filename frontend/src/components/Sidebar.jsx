@@ -1,7 +1,7 @@
 "use client";
 
 import styled from "styled-components";
-import { useRouter } from "next/navigation";
+import { useRouter,usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   Globe,
@@ -13,39 +13,15 @@ import { useAuth } from "@/context/AuthContext";
 
 export default function Sidebar({onProtectedClick}){
   const router=useRouter();
+  const pathname=usePathname();
   const {user}=useAuth();
 
   const menu=[
-    {
-      name:"Dashboard",
-      icon:LayoutDashboard,
-      path:"/",
-      protected:false
-    },
-    {
-      name:"Sources",
-      icon:Globe,
-      path:"/sources",
-      protected:true
-    },
-    {
-      name:"Extractors",
-      icon:Database,
-      path:"/extractors",
-      protected:true
-    },
-    {
-      name:"History",
-      icon:History,
-      path:"/history",
-      protected:true
-    },
-    {
-      name:"Settings",
-      icon:Settings,
-      path:"/settings",
-      protected:true
-    }
+    {name:"Dashboard",icon:LayoutDashboard,path:"/",protected:false},
+    {name:"Sources",icon:Globe,path:"/sources",protected:true},
+    {name:"Extractors",icon:Database,path:"/extractors",protected:true},
+    {name:"History",icon:History,path:"/history",protected:true},
+    {name:"Settings",icon:Settings,path:"/settings",protected:true}
   ];
 
   function handleClick(item){
@@ -53,7 +29,6 @@ export default function Sidebar({onProtectedClick}){
       onProtectedClick();
       return;
     }
-
     router.push(item.path);
   }
 
@@ -65,10 +40,12 @@ export default function Sidebar({onProtectedClick}){
       {
         menu.map(item=>{
           const Icon=item.icon;
+          const active=pathname===item.path;
 
           return(
             <Item
               key={item.name}
+              $active={active}
               onClick={()=>handleClick(item)}
             >
               <Icon size={20}/>
@@ -100,7 +77,7 @@ const Item=styled.div`
   gap:12px;
   align-items:center;
   padding:15px 0;
-  color:#9ca3af;
+  color:${props=>props.$active?"#38bdf8":"#9ca3af"};
   cursor:pointer;
 
   &:hover{

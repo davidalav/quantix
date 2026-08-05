@@ -1,16 +1,12 @@
 #!/usr/bin/env python3
-"""
-api/crawlerRoute.py — FastAPI роуты для запуска краулера Quantix.
-Специфичная логика (матчи, live-коэффициенты) — здесь.
-Общие переиспользуемые функции — в crawler.py.
-"""
-
 import time
-from typing import List, Set, Tuple
+from typing import List, Optional, Set, Tuple
 
 from camoufox.sync_api import Camoufox
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
+from sqlalchemy.orm import Session
 
+from auth import get_current_user_optional
 from crawler import (
     CrawlRequest,
     build_proxy_config,
@@ -20,16 +16,62 @@ from crawler import (
     get_odds_native,
     watch_odds,
 )
+from db import AnonymousUsage, UserDB, get_db
 
 router = APIRouter()
 
+FREE_REQUEST_LIMIT = 1   # сколько запросов разрешено гостю
+FREE_RESULT_LIMIT = 5    # сколько строк отдаём гостю в каждом списке
+
+
+def get_client_ip(request: Request) -> str:
+    forwarded = request.headers.get("x-forwarded-for")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    return request.client.host
+
+
+def check_and_increment_anon_usage(ip: str, db: Session):
+    """Пускает гостя один раз; на второй запрос с того же IP — 403."""
+    usage = db.query(AnonymousUsage).filter(AnonymousUsage.ip == ip).first()
+
+    if usage and usage.request_count >= FREE_REQUEST_LIMIT:
+        raise HTTPException(
+            status_code=403,
+            detail="Бесплатный лимит исчерпан (1 запрос). Зарегистрируйтесь, чтобы продолжить.",
+        )
+
+    if usage:
+        usage.request_count += 1
+    else:
+        usage = AnonymousUsage(ip=ip, request_count=1)
+        db.add(usage)
+
+    db.commit()
+
+
+def limit_payload(payload: dict, max_rows: int) -> dict:
+    """Обрезает JSON для гостя: первые N страниц, N матчей, N рынков коэффициентов."""
+    limited_results = []
+
+    for page_result in payload["results"][:max_rows]:
+        limited = dict(page_result)
+
+        if "matches" in limited:
+            limited["matches"] = limited["matches"][:max_rows]
+
+        if "live" in limited and limited["live"].get("snapshot"):
+            limited["live"] = {
+                **limited["live"],
+                "snapshot": limited["live"]["snapshot"][:max_rows],
+            }
+
+        limited_results.append(limited)
+
+    return {**payload, "results": limited_results, "limited": True}
+
 
 def _open_first_match(page):
-    """
-    Открывает первую карточку матча на странице, дожидается появления коэффициентов
-    и раскрывает все свёрнутые секции — без этого get_odds_native() видит пустой DOM,
-    т.к. секции по умолчанию свёрнуты (это и было причиной пустого live.snapshot).
-    """
     try:
         card = page.locator(".lv_event_card").nth(0)
         target = card.locator("[class*='team'],[class*='participant'],[class*='name']").first
@@ -47,7 +89,7 @@ def _open_first_match(page):
             except Exception:
                 continue
 
-        time.sleep(2)  # даём время подгрузиться данным по вебсокету после раскрытия
+        time.sleep(2)
     except Exception as e:
         print("MATCH OPEN ERROR:", e)
 
@@ -91,7 +133,15 @@ def _crawl_page(page, request: CrawlRequest, current_url: str) -> dict:
 
 
 @router.post("/crawl")
-def crawl(request: CrawlRequest):
+def crawl(
+    request: CrawlRequest,
+    http_request: Request,
+    db: Session = Depends(get_db),
+    current_user: Optional[UserDB] = Depends(get_current_user_optional),
+):
+    if current_user is None:
+        check_and_increment_anon_usage(get_client_ip(http_request), db)
+
     visited: Set[str] = set()
     to_visit: List[Tuple[str, int]] = [(str(request.url), 0)]
     all_results = []
@@ -128,7 +178,12 @@ def crawl(request: CrawlRequest):
 
             context.close()
 
-        return {"pages_crawled": len(visited), "results": all_results}
+        payload = {"pages_crawled": len(visited), "results": all_results}
+
+        if current_user is None:
+            payload = limit_payload(payload, FREE_RESULT_LIMIT)
+
+        return payload
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

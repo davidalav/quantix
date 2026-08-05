@@ -1,7 +1,13 @@
+"use client";
+
 import styled from "styled-components";
 import Card from "./ui/Card";
 
-export default function ResultCard(){
+export default function ResultCard({
+  result,
+  loading,
+  error
+}){
   return (
     <Card>
       <h3>
@@ -9,13 +15,15 @@ export default function ResultCard(){
       </h3>
 
       <Code>
-        {`
-            {
-            "title":"MacBook Air",
-            "price":"999$",
-            "rating":4.8
-            }
-        `}
+        {
+          loading
+            ? "Analyzing..."
+            : error
+            ? `Error: ${error}`
+            : result
+            ? JSON.stringify(result, null, 2)
+            : "Run an analysis to see results here."
+        }
       </Code>
     </Card>
   );
@@ -26,4 +34,8 @@ const Code = styled.pre`
   padding:20px;
   border-radius:10px;
   color:#4ade80;
+  white-space:pre-wrap;
+  word-break:break-word;
+  max-height:500px;
+  overflow-y:auto;
 `;

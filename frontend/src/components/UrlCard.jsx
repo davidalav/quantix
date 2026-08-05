@@ -1,8 +1,13 @@
+"use client";
+
 import styled from "styled-components";
 import Card from "./ui/Card";
 
 export default function UrlCard({
-  onLoginClick
+  url,
+  onUrlChange,
+  onAnalyze,
+  loading
 }) {
   return (
     <Card>
@@ -10,10 +15,14 @@ export default function UrlCard({
         Website URL
       </h3>
       <Row>
-        <Input placeholder="https://example.com"/>
+        <Input
+          placeholder="https://example.com"
+          value={url}
+          onChange={(e) => onUrlChange(e.target.value)}
+        />
 
-        <Button onClick={onLoginClick}>
-          Analyze
+        <Button onClick={onAnalyze} disabled={loading || !url}>
+          {loading ? "Analyzing..." : "Analyze"}
         </Button>
       </Row>
     </Card>
@@ -42,4 +51,9 @@ const Button = styled.button`
   padding:0 25px;
   border-radius:10px;
   cursor:pointer;
+
+  &:disabled{
+    opacity:0.5;
+    cursor:not-allowed;
+  }
 `;

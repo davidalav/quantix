@@ -29,6 +29,14 @@ class CrawlRequest(BaseModel):
     live_interval: float = 2.0
     live_rounds: int = 5
 
+    # универсальный табличный режим — для сайтов без семантических классов
+    # (курсы валют, прайс-листы, каталоги и т.п. на Tailwind-утилитах)
+    table_mode: bool = False
+    table_row_selector: Optional[str] = None
+    table_cell_selector: Optional[str] = None
+    table_header_selector: Optional[str] = None
+    table_label_selector: Optional[str] = None
+
 
 def build_proxy_config(proxy_url: Optional[str]) -> Optional[dict]:
     """Превращает строку прокси (http://user:pass@host:port) в формат, который ждёт Camoufox."""
@@ -64,6 +72,66 @@ def extract_data(page, selectors: Dict[str, str], list_selector: Optional[str]):
         field: (page.query_selector(selector).inner_text().strip() if page.query_selector(selector) else None)
         for field, selector in selectors.items()
     }
+
+
+def extract_table(
+    page,
+    row_selector: str,
+    cell_selector: str,
+    header_selector: Optional[str] = None,
+    label_selector: Optional[str] = None,
+) -> List[dict]:
+    """
+    Универсальный экстрактор табличных данных — работает на любом сайте
+    с повторяющейся структурой "строка -> набор ячеек с одинаковым классом",
+    даже если у ячеек нет уникальных семантических классов (только Tailwind-утилиты).
+
+    row_selector    — селектор одной строки таблицы (например, ".flex.h-12...")
+    cell_selector   — селектор ячейки со значением ВНУТРИ строки (например, ".relative.flex.z-1...")
+    header_selector — опционально: селектор заголовков колонок (чтобы подписать значения по именам)
+    label_selector  — опционально: селектор "подписи" строки (например, название организации)
+
+    Некоторые сайты рендерят первую колонку (например, название банка) ОТДЕЛЬНЫМ
+    параллельным DOM-деревом — "замороженная" колонка, визуально выровненная с
+    остальной таблицей через CSS, но структурно НЕ вложенная в те же строки.
+    В этом случае label_selector внутри row ничего не находит. Фоллбэк: ищем
+    подписи на уровне всей страницы и сопоставляем их по порядковому индексу
+    со строками — работает, если число подписей совпадает с числом строк.
+    """
+    headers = None
+    if header_selector:
+        headers = [el.inner_text().strip() for el in page.query_selector_all(header_selector)]
+
+    rows = page.query_selector_all(row_selector)
+
+    page_labels = None
+    if label_selector:
+        page_labels = [el.inner_text().strip() for el in page.query_selector_all(label_selector)]
+
+    results = []
+
+    for idx, row in enumerate(rows):
+        values = [el.inner_text().strip() for el in row.query_selector_all(cell_selector)]
+
+        label = None
+        if label_selector:
+            label_el = row.query_selector(label_selector)
+            if label_el:
+                label = label_el.inner_text().strip()
+            elif page_labels and idx < len(page_labels):
+                label = page_labels[idx]
+
+        if headers and len(headers) == len(values):
+            row_data = dict(zip(headers, values))
+        else:
+            row_data = {"values": values}
+
+        if label is not None:
+            row_data = {"label": label, **row_data}
+
+        results.append(row_data)
+
+    return results
 
 
 def get_links(page, base_url: str, same_domain_only: bool) -> List[str]:
@@ -157,7 +225,7 @@ def watch_odds(page, interval: float, rounds: int) -> dict:
 def run_crawl(request: CrawlRequest) -> dict:
     """
     Простой обход сайта только по selectors/list_selector, без работы с матчами и live-коэффициентами.
-    Используется как база — специфичная логика (матчи, коэффициенты) живёт в api/crawlerRoute.py.
+    Используется как база — специфичная логика (матчи, коэффициенты, таблицы) живёт в api/crawlerRoute.py.
     """
     visited: Set[str] = set()
     to_visit: List[Tuple[str, int]] = [(str(request.url), 0)]

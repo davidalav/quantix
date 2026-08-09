@@ -42,10 +42,20 @@ class UserCreate(BaseModel):
     email: EmailStr
     password: str
 
+class AnonymousUsage(Base):
+    __tablename__ = "anonymous_usage"
+
+    ip = Column(String, primary_key=True)
+    request_count = Column(Integer, default=0)
+
 class UserResponse(BaseModel):
     id: int
     username: str
     email: EmailStr
     model_config = {"from_attributes": True}
+
+class LoginRequest(BaseModel):
+    username: str
+    password: str
 
 Base.metadata.create_all(engine)

@@ -18,7 +18,7 @@ services:
       - "8000:8000"
     environment:
       - DB_URL=postgresql://quantix:secret@db:5432/quantix
-      - SECRET_KEY=замени-на-свой-секретный-ключ
+      - SECRET_KEY=b0d7131c028d602e415a87456198c11c69d3ff2f0e1672141c0b926f18080657
     depends_on:
       db:
         condition: service_healthy

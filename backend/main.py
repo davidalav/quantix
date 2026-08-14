@@ -7,6 +7,7 @@ from fastapi import FastAPI
 from routes import router
 from api.crawlerRoute import router as crawler_router
 from fastapi.middleware.cors import CORSMiddleware
+from db import init_db
 
 app = FastAPI()
 
@@ -22,6 +23,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.on_event("startup")
+async def startup_event():
+    init_db()
 
 def summarize(components):
     not_ready = 0

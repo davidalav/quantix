@@ -27,6 +27,7 @@ jobs:
         env:
           PYTHONPATH: backend
           DB_URL: "postgresql://quantix:secret@host.docker.internal:5432/quantix"
+          SECRET_KEY: "b0d7131c028d602e415a87456198c11c69d3ff2f0e1672141c0b926f18080657"
         run: pytest backend/tests/
 
   frontend-test:

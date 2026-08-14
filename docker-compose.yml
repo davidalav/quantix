@@ -9,6 +9,8 @@ services:
       - "3000:3000"
     environment:
       - NEXT_PUBLIC_API_URL=http://34.138.177.147:8000
+    extra_hosts:
+      - "localhost:34.138.177.147"
     depends_on:
       - backend
 

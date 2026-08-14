@@ -16,7 +16,7 @@ describe('loginUser', () => {
 
     expect(result.access_token).toBe('abc123')
     expect(global.fetch).toHaveBeenCalledWith(
-      'http://localhost:8000/login/',
+      'http://34.138.177.147:8000/login/',
       expect.objectContaining({ method: 'POST' })
     )
   })

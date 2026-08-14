@@ -254,6 +254,11 @@ def run_crawl(request: CrawlRequest) -> dict:
 
                 try:
                     page.goto(current_url, timeout=30000, wait_until="domcontentloaded")
+                    if request.wait_selector:
+                        try:
+                            page.wait_for_selector(request.wait_selector, timeout=15000)
+                        except Exception:
+                            pass
                     time.sleep(request.wait_seconds)
                 except Exception:
                     continue

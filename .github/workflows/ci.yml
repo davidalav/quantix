@@ -26,6 +26,7 @@ jobs:
       - name: Run backend tests
         env:
           PYTHONPATH: backend
+          DB_URL: "postgresql://quantix:secret@host.docker.internal:5432/quantix"
         run: pytest backend/tests/
 
   frontend-test:

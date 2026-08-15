@@ -43,7 +43,7 @@ jobs:
           push: true
           tags: us-east1-docker.pkg.dev/quantix-505516/quantix/frontend:latest
           build-args: |
-            NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}:8000
+            NEXT_PUBLIC_API_URL=${{ secrets.SERVER_IP }}:8000
 
   deploy:
     needs: build-and-push

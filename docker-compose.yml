@@ -13,8 +13,8 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - DB_URL=${{ secrets.DB_URL }}
-      - SECRET_KEY=${{ secrets.SECRET_KEY }}
+      - DB_URL=${DB_URL}
+      - SECRET_KEY=${SECRET_KEY}
     depends_on:
       db:
         condition: service_healthy

@@ -1,26 +1,20 @@
 services:
   frontend:
-    build:
-      context: ./frontend
-      args:
-        - NEXT_PUBLIC_API_URL=http://${{ secrets.SERVER_IP }}:8000
+    image: us-east1-docker.pkg.dev/quantix-505516/quantix/frontend:latest
     container_name: quantix-frontend
     ports:
       - "3000:3000"
-    environment:
-      - NEXT_PUBLIC_API_URL=http://${{ secrets.SERVER_IP }}:8000
     depends_on:
       - backend
 
   backend:
-    build:
-      context: ./backend
+    image: us-east1-docker.pkg.dev/quantix-505516/quantix/backend:latest
     container_name: quantix-backend
     ports:
       - "8000:8000"
-    env:
-      - DB_URL: ${{ secrets.DB_URL }}
-      - SECRET_KEY: ${{ secrets.SECRET_KEY }}
+    environment:
+      - DB_URL=${{ secrets.DB_URL }}
+      - SECRET_KEY=${{ secrets.SECRET_KEY }}
     depends_on:
       db:
         condition: service_healthy

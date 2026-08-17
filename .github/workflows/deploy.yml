@@ -47,15 +47,10 @@ jobs:
 
   deploy:
     needs: build-and-push
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
-      - name: Deploy to VM via SSH
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SERVER_IP }}
-          username: davidalaverdyan0
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            cd ~/quantix
-            docker compose pull
-            docker compose up -d 
+      - name: Deploy on VM
+        run: |
+          cd ~/quantix
+          docker compose pull
+          docker compose up -d

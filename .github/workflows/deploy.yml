@@ -51,7 +51,7 @@ jobs:
     steps:
       - name: Login to Artifact Registry
         run: |
-          gcloud auth print-access-token | docker login -u oauth2accesstoken --password-stdin https://us-east1-docker.pkg.dev
+          cat /gcp-key.json | docker login -u _json_key --password-stdin https://us-east1-docker.pkg.dev
       - name: Deploy on VM
         run: |
           cd /home/davidalaverdyan0/quantix

@@ -51,6 +51,6 @@ jobs:
     steps:
       - name: Deploy on VM
         run: |
-          cd ~/quantix
+          cd /home/davidalaverdyan0/quantix
           docker compose pull
           docker compose up -d

@@ -8,7 +8,30 @@ terraform {
 }
 
 provider "google" {
-  project = "quantix-505516"
+  project = "quantix-prod"
   region  = "us-east1"
   zone    = "us-east1-c"
+}
+
+# Автоматически активируем Artifact Registry API в проекте
+resource "google_project_service" "artifact_registry" {
+  project            = "quantix-prod" # Убедитесь, что здесь ваш актуальный проект
+  service            = "artifactregistry.googleapis.com"
+  disable_on_destroy = false
+}
+
+# Выдаем вашему пользователю роль для прохода через IAP туннель
+resource "google_project_iam_member" "iap_tunnel_user" {
+  project = "quantix-prod"
+  role    = "roles/iap.tunnelResourceAccessor"
+  member  = "user:davidalaverdyan0@gmail.com"
+}
+
+# Безопасный способ динамического назначения роли
+data "google_project" "project" {}
+
+resource "google_project_iam_member" "allow_vm_to_pull_images" {
+  project = "quantix-prod"
+  role    = "roles/artifactregistry.reader"
+  member  = "serviceAccount:${data.google_project.project.number}-compute@developer.gserviceaccount.com"
 }

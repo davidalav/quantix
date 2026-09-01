@@ -45,15 +45,15 @@ jobs:
           build-args: |
             NEXT_PUBLIC_API_URL=/api
 
-  deploy:
+    deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy to app VM via SSH
+      - name: Deploy to VM
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.SERVER_IP }}
-          username: davidalaverdyan0
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd ~/quantix

@@ -45,7 +45,7 @@ jobs:
           build-args: |
             NEXT_PUBLIC_API_URL=/api
 
-    deploy:
+  deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
     steps:

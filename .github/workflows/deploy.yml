@@ -58,10 +58,14 @@ jobs:
 
       - name: Deploy over SSH
         run: |
-          ssh -i ~/.ssh/id_ed25519 ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} '
+          ssh -o IdentitiesOnly=yes -o PubkeyAcceptedKeyTypes=+ssh-ed25519 -i ~/.ssh/id_ed25519 davidalaverdyan0@${{ secrets.SERVER_IP }} '
             set -euo pipefail
+            echo "Cleaning up old docker images..."
+            docker system prune -a --volumes -f || true
             cd ~/quantix
+            echo "Pulling new images..."
             docker compose pull
+            echo "Starting containers..."
             docker compose up -d
             echo "Deployment complete."
           '

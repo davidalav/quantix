@@ -12,14 +12,14 @@ services:
     restart: on-failure
 
   frontend:
-    image: us-east1-docker.pkg.dev/quantix-prod/quantix/frontend:latest
+    image: us-east1-docker.pkg.dev/quantix-prod/quantix/frontend:git-${TAG}
     container_name: quantix-frontend
     environment:
       - NEXT_PUBLIC_API_URL=/api
     restart: on-failure
 
   backend:
-    image: us-east1-docker.pkg.dev/quantix-prod/quantix/backend:latest
+    image: us-east1-docker.pkg.dev/quantix-prod/quantix/backend:git-${TAG}
     container_name: quantix-backend
     environment:
       - DB_URL=${DB_URL}

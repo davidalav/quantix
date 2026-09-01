@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   nginx:
     image: nginx:latest
@@ -7,21 +5,23 @@ services:
     ports:
       - "80:80"
     volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:
       - frontend
       - backend
+    restart: on-failure
 
   frontend:
-    image: us-east1-docker.pkg.dev/quantix-505516/quantix/frontend:latest
+    image: us-east1-docker.pkg.dev/quantix-prod/quantix/frontend:latest
     container_name: quantix-frontend
     environment:
       - NEXT_PUBLIC_API_URL=/api
+    restart: on-failure
 
   backend:
-    image: us-east1-docker.pkg.dev/quantix-505516/quantix/backend:latest
+    image: us-east1-docker.pkg.dev/quantix-prod/quantix/backend:latest
     container_name: quantix-backend
     environment:
-      - DB_URL=postgresql://quantix:secret@$${DB_SERVER_IP}:5432/quantix
+      - DB_URL=${DB_URL}
       - SECRET_KEY=${SECRET_KEY}
     restart: on-failure

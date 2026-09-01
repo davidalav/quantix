@@ -34,26 +34,28 @@ jobs:
         with:
           context: ./backend
           push: true
-          tags: us-east1-docker.pkg.dev/quantix-505516/quantix/backend:latest
+          tags: us-east1-docker.pkg.dev/quantix-prod/quantix/backend:latest
 
       - name: Build and push frontend
         uses: docker/build-push-action@v5
         with:
           context: ./frontend
           push: true
-          tags: us-east1-docker.pkg.dev/quantix-505516/quantix/frontend:latest
+          tags: us-east1-docker.pkg.dev/quantix-prod/quantix/frontend:latest
           build-args: |
-            NEXT_PUBLIC_API_URL=${{ secrets.SERVER_IP }}:8000
+            NEXT_PUBLIC_API_URL=/api
 
   deploy:
     needs: build-and-push
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     steps:
-      - name: Login to Artifact Registry
-        run: |
-          cat /gcp-key.json | docker login -u _json_key --password-stdin https://us-east1-docker.pkg.dev
-      - name: Deploy on VM
-        run: |
-          cd /home/davidalaverdyan0/quantix
-          docker compose pull
-          docker compose up -d
+      - name: Deploy to app VM via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: davidalaverdyan0
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd ~/quantix
+            docker compose pull
+            docker compose up -d

@@ -58,7 +58,7 @@ jobs:
 
       - name: Deploy over SSH
         run: |
-          ssh -i ~/.ssh/id_ed25519 ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} '
+          ssh -i ~/.ssh/id_ed25519 davidalaverdyan0@${{ secrets.SERVER_IP }} '
             set -euo pipefail
             cd ~/quantix
             docker compose pull

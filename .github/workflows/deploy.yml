@@ -29,19 +29,27 @@ jobs:
       - name: Configure Docker for Artifact Registry
         run: gcloud auth configure-docker us-east1-docker.pkg.dev
 
+      - name: Get short SHA
+        id: vars
+        run: echo "short_sha=$(echo ${{ github.event.workflow_run.head_sha }} | cut -c1-7)" >> $GITHUB_OUTPUT
+
       - name: Build and push backend
         uses: docker/build-push-action@v5
         with:
           context: ./backend
           push: true
-          tags: us-east1-docker.pkg.dev/quantix-prod/quantix/backend:latest
+          tags: |
+            us-east1-docker.pkg.dev/quantix-prod/quantix/backend:latest
+            us-east1-docker.pkg.dev/quantix-prod/quantix/backend:git-${{ steps.vars.outputs.short_sha }}
 
       - name: Build and push frontend
         uses: docker/build-push-action@v5
         with:
           context: ./frontend
           push: true
-          tags: us-east1-docker.pkg.dev/quantix-prod/quantix/frontend:latest
+          tags: |
+            us-east1-docker.pkg.dev/quantix-prod/quantix/frontend:latest
+            us-east1-docker.pkg.dev/quantix-prod/quantix/frontend:git-${{ steps.vars.outputs.short_sha }}
           build-args: |
             NEXT_PUBLIC_API_URL=/api
 
@@ -58,14 +66,23 @@ jobs:
 
       - name: Deploy over SSH
         run: |
-          ssh -o IdentitiesOnly=yes -o PubkeyAcceptedKeyTypes=+ssh-ed25519 -i ~/.ssh/id_ed25519 davidalaverdyan0@${{ secrets.SERVER_IP }} '
+          # Получаем короткий хэш коммита
+          SHORT_SHA=$(echo "${{ github.event.workflow_run.head_sha }}" | cut -c1-7)
+          
+          # Оборачиваем в одинарные кавычки, чтобы переменная SHORT_SHA подставилась на стороне GitHub Actions
+          ssh -o IdentitiesOnly=yes -o PubkeyAcceptedKeyTypes=+ssh-ed25519 -i ~/.ssh/id_ed25519 davidalaverdyan0@${{ secrets.SERVER_IP }} "
             set -euo pipefail
-            echo "Cleaning up old docker images..."
-            docker system prune -a --volumes -f || true
             cd ~/quantix
-            echo "Pulling new images..."
+            
+            echo 'Cleaning up old docker images...'
+            docker system prune -a --volumes -f || true
+            
+            echo 'Pulling new images with TAG=git-${SHORT_SHA}...'
+            export TAG=git-${SHORT_SHA}
             docker compose pull
-            echo "Starting containers..."
-            docker compose up -d
-            echo "Deployment complete."
-          '
+            
+            echo 'Starting containers...'
+            docker compose up -d --force-recreate
+            
+            echo 'Deployment complete.'
+          "

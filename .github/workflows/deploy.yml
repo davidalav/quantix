@@ -71,21 +71,22 @@ jobs:
           
           # Оборачиваем в одинарные кавычки, чтобы переменная SHORT_SHA подставилась на стороне GitHub Actions
           ssh -o IdentitiesOnly=yes -o PubkeyAcceptedKeyTypes=+ssh-ed25519 -i ~/.ssh/id_ed25519 davidalaverdyan0@${{ secrets.SERVER_IP }} "
-            set -euo pipefail
-            cd ~/quantix
-            
-            echo 'Pulling latest code...'
-            git pull
+          set -euo pipefail
+          cd ~/quantix
+          
+          echo 'Resetting local changes and pulling latest code...'
+          git fetch origin
+          git reset --hard origin/main
 
-            echo 'Cleaning up old docker images...'
-            docker system prune -a --volumes -f || true
-            
-            echo 'Pulling new images with TAG=git-${SHORT_SHA}...'
-            export TAG=${SHORT_SHA}
-            docker compose pull
-            
-            echo 'Starting containers...'
-            docker compose up -d --force-recreate
-            
-            echo 'Deployment complete.'
+          echo 'Cleaning up old docker images...'
+          docker system prune -a --volumes -f || true
+          
+          echo 'Pulling new images with TAG=git-${SHORT_SHA}...'
+          export TAG=${SHORT_SHA}
+          docker compose pull
+          
+          echo 'Starting containers...'
+          docker compose up -d --force-recreate
+          
+          echo 'Deployment complete.'
           "

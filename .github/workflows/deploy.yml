@@ -74,11 +74,14 @@ jobs:
             set -euo pipefail
             cd ~/quantix
             
+            echo 'Pulling latest code...'
+            git pull
+
             echo 'Cleaning up old docker images...'
             docker system prune -a --volumes -f || true
             
             echo 'Pulling new images with TAG=git-${SHORT_SHA}...'
-            export TAG=git-${SHORT_SHA}
+            export TAG=${SHORT_SHA}
             docker compose pull
             
             echo 'Starting containers...'

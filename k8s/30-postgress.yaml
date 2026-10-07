@@ -1,0 +1,52 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-data
+  namespace: quantix
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests: 
+      storage: 1Gi
+
+---
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: postgres
+  namespace: quantix
+spec:
+  containers:
+    - name: postgres
+      image: postgres:15-alpine
+      ports:
+        - containerPort: 5432
+      env: 
+        - name: POSTGRES_USER
+          value: "quantix"
+        - name: POSTGRES_PASSWORD
+          value: "secret"
+        - name: POSTGRES_DB
+          value: "quantix"
+      volumeMounts:
+        - name: postgres-storage
+          mountPath: /var/lib/postgresql/data
+  volumes:
+    - name: postgres-storage
+      persistentVolumeClaim:
+        claimName: postgres-data
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: quantix-postgres
+  namespace: quantix
+spec:
+  selector:
+    app: postgres
+  ports:
+    - port: 5432
+      targetPort: 5432

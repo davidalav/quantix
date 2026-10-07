@@ -1,4 +1,3 @@
-# 1. Машина для приложений (Next.js + FastAPI + Nginx)
 resource "google_compute_instance" "quantix_app_vm" {
   name         = "quantix-app-vm"
   machine_type = "e2-micro"
@@ -22,7 +21,6 @@ resource "google_compute_instance" "quantix_app_vm" {
     scopes = ["cloud-platform"]
   }
 
-  # ВСЕ КОМАНДЫ ТУТ, БОЛЬШЕ НИКАКИХ ВНЕШНИХ ФАЙЛОВ:
   metadata_startup_script = <<EOF
 #!/bin/bash
 # Выделяем Swap (память)
@@ -95,7 +93,6 @@ docker compose up -d
 EOF
 }
 
-# 2. Изолированная машина для Базы Данных
 resource "google_compute_instance" "quantix_db_vm" {
   name         = "quantix-db-vm"
   machine_type = "e2-micro"

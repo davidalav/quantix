@@ -22,5 +22,12 @@ spec:
               value: "postgresql://quantix:secret@quantix-db:5432/quantix"
             - name: SECRET_KEY
               value: "b0d7131c028d602e415a87456198c11c69d3ff2f0e1672141c0b926f18080657"
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
           ports:
             - containerPort: 8000

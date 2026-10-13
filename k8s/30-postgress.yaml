@@ -7,44 +7,72 @@ spec:
   accessModes:
     - ReadWriteOnce
   resources:
-    requests: 
+    requests:
       storage: 1Gi
 
 ---
 
-apiVersion: v1
-kind: Pod
+apiVersion: apps/v1
+kind: Deployment
 metadata:
   name: postgres
   namespace: quantix
 spec:
-  containers:
-    - name: postgres
-      image: postgres:15-alpine
-      ports:
-        - containerPort: 5432
-      env: 
-        - name: POSTGRES_USER
-          value: "quantix"
-        - name: POSTGRES_PASSWORD
-          value: "secret"
-        - name: POSTGRES_DB
-          value: "quantix"
-      volumeMounts:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:15-alpine
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_USER
+              value: "quantix"
+            - name: POSTGRES_DB
+              value: "quantix"
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-credentials
+                  key: POSTGRES_PASSWORD
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-U", "quantix", "-d", "quantix"]
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          volumeMounts:
+            - name: postgres-storage
+              mountPath: /var/lib/postgresql/data
+      volumes:
         - name: postgres-storage
-          mountPath: /var/lib/postgresql/data
-  volumes:
-    - name: postgres-storage
-      persistentVolumeClaim:
-        claimName: postgres-data
+          persistentVolumeClaim:
+            claimName: postgres-data
 
 ---
+
 apiVersion: v1
 kind: Service
 metadata:
   name: quantix-postgres
   namespace: quantix
 spec:
+  type: ClusterIP
   selector:
     app: postgres
   ports:

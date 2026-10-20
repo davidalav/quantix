@@ -17,9 +17,15 @@ app.include_router(
     prefix="/api",
     tags=["crawler"]
 )
+
+origins = os.getenv(
+    "CORS_ORIGINS",
+    "http://localhost:3000,http://34.139.163.84:3000",
+).split(",")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://34.139.163.84:3000"],
+    allow_origins=origins,
     allow_methods=["*"],
     allow_headers=["*"],
 )

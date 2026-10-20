@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: quantix-frontend:v1
+          image: quantix-frontend:v2
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3000

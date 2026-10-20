@@ -1,5 +1,6 @@
 "use client";
 
+import { API_URL } from '../lib/api';
 import {
   createContext,
   useContext,
@@ -38,7 +39,7 @@ export function AuthProvider({ children }) {
   async function logout() {
     try {
         // 1. Опционально: уведомляем бэкенд (если нужно)
-        await fetch('http://34.138.177.147:8000/api/logout/', { 
+        await fetch(API_URL + "/api/logout/", {
             method: 'POST',
             headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         });

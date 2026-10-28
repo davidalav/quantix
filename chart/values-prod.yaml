@@ -1,0 +1,60 @@
+backend:
+  replicaCount: 3
+  image:
+    tag: "v2"
+    pullPolicy: IfNotPresent
+  resources:
+    requests:
+      cpu: 200m
+      memory: 256Mi
+    limits:
+      cpu: 1000m
+      memory: 512Mi
+
+frontend:
+  replicaCount: 2
+  image:
+    tag: "v2"
+    pullPolicy: IfNotPresent
+  apiUrl: https://api.quantix.example.com
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 400m
+      memory: 512Mi
+
+database:
+  existingSecret: quantix-production-credentials
+  password: ""
+  secretKey: ""
+  resources:
+    requests:
+      cpu: 200m
+      memory: 512Mi
+    limits:
+      cpu: 500m
+      memory: 1Gi
+
+config:
+  appEnv: production
+  logLevel: warn
+  corsOrigins: https://app.quantix.example.com
+
+ingress:
+  frontendHost: app.quantix.example.com
+  backendHost: api.quantix.example.com
+  tls:
+    - secretName: quantix-tls
+      hosts:
+        - app.quantix.example.com
+        - api.quantix.example.com
+
+resourceQuota:
+  hard:
+    pods: "20"
+    requests.cpu: "3"
+    requests.memory: 4Gi
+    limits.cpu: "6"
+    limits.memory: 8Gi

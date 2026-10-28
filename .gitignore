@@ -4,6 +4,8 @@ archive/
 .venv/
 __pycache__/
 *.pyc
+.env
+.terraform/
 .env.terraform/
 *.tfstate
 *.tfstate.backup

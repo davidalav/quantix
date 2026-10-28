@@ -1,0 +1,15 @@
+backend:
+  replicaCount: 1
+
+frontend:
+  replicaCount: 1
+  apiUrl: http://api.dev.quantix.local
+
+config:
+  appEnv: development
+  logLevel: debug
+  corsOrigins: "http://app.dev.quantix.local,http://localhost:3000"
+
+ingress:
+  frontendHost: app.dev.quantix.local
+  backendHost: api.dev.quantix.local

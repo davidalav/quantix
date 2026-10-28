@@ -1,0 +1,84 @@
+nameOverride: ""
+fullnameOverride: ""
+
+backend:
+  replicaCount: 2
+  image:
+    repository: quantix-backend
+    tag: "v2"
+    pullPolicy: IfNotPresent
+  port: 8000
+  healthPath: /health
+  service:
+    port: 8000
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 250m
+      memory: 256Mi
+
+frontend:
+  replicaCount: 2
+  image:
+    repository: quantix-frontend
+    tag: "v2"
+    pullPolicy: IfNotPresent
+  port: 3000
+  apiUrl: http://api.quantix.local
+  service:
+    port: 3000
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+
+database:
+  image:
+    repository: postgres
+    tag: "15-alpine"
+    pullPolicy: IfNotPresent
+  port: 5432
+  name: quantix
+  user: quantix
+  # Local development placeholder only. Use database.existingSecret outside development.
+  password: "quantix-local-dev-only"
+  secretKey: "quantix-local-dev-only-change-me"
+  existingSecret: ""
+  storage:
+    size: 1Gi
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+config:
+  appEnv: production
+  logLevel: info
+  corsOrigins: "http://app.quantix.local,http://localhost:3000"
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+  frontendHost: app.quantix.local
+  backendHost: api.quantix.local
+  path: /
+  tls: []
+
+resourceQuota:
+  enabled: true
+  hard:
+    pods: "10"
+    requests.cpu: "1"
+    requests.memory: 1Gi
+    limits.cpu: "2"
+    limits.memory: 2Gi

@@ -1,0 +1,13 @@
+{{- if .Values.resourceQuota.enabled }}
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: {{ include "myapp.resourceName" (dict "context" . "suffix" "quota") }}
+  labels:
+    {{- include "myapp.labels" . | nindent 4 }}
+  annotations:
+    description: "Resource budget for the Quantix namespace"
+spec:
+  hard:
+    {{- toYaml .Values.resourceQuota.hard | nindent 4 }}
+{{- end }}

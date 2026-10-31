@@ -1,0 +1,59 @@
+name: CD
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: deploy-minikube
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Ensure minikube is running
+        run: minikube status || minikube start
+
+      - name: Set tag
+        run: echo "TAG=${GITHUB_SHA::7}" >> "$GITHUB_ENV"
+
+      - name: Build and load images
+        run: |
+          docker build -t quantix-backend:$TAG backend
+          docker build -t quantix-frontend:$TAG \
+            --build-arg NEXT_PUBLIC_API_URL=http://api.quantix.local frontend
+          minikube image load quantix-backend:$TAG
+          minikube image load quantix-frontend:$TAG
+
+      - name: Render manifests
+        run: |
+          rm -rf /tmp/k8s && cp -r k8s /tmp/k8s
+          sed -i -E "s|image: quantix-backend:.*|image: quantix-backend:$TAG|"   /tmp/k8s/10-backend.yaml
+          sed -i -E "s|image: quantix-frontend:.*|image: quantix-frontend:$TAG|" /tmp/k8s/20-frontend.yaml
+
+      - name: Deploy (sequential, to fit the quota)
+        run: |
+          kubectl apply -f /tmp/k8s/00-namespace.yaml
+          kubectl apply -f /tmp/k8s/05-resourcequota.yaml
+          kubectl apply -f /tmp/k8s/30-postgress.yaml
+          kubectl rollout status deploy/postgres -n quantix --timeout=180s
+          kubectl apply -f /tmp/k8s/10-backend.yaml
+          kubectl rollout status deploy/backend -n quantix --timeout=240s
+          kubectl apply -f /tmp/k8s/20-frontend.yaml
+          kubectl rollout status deploy/frontend -n quantix --timeout=180s
+          kubectl apply -f /tmp/k8s/*ingress*.yaml
+
+      - name: Smoke test via Ingress
+        run: |
+          IP=$(minikube ip)
+          curl -fsS -H "Host: api.quantix.local" http://$IP/health
+          curl -fsSI -H "Host: app.quantix.local" http://$IP/
+
+      - name: Roll back on failure
+        if: failure()
+        run: |
+          kubectl rollout undo deploy/backend -n quantix || true
+          kubectl rollout undo deploy/frontend -n quantix || true

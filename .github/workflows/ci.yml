@@ -1,51 +1,61 @@
-name: quantix-CI
+name: CI
 
 on:
-  push:
-    branches: [ main ]
   pull_request:
-    branches: [ main ]
+  push:
+    branches: [main]
+
 jobs:
-  backend-test:
-
+  test-on-minikube:
     runs-on: ubuntu-latest
-
     steps:
+      - uses: actions/checkout@v4
 
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - name: Validate manifests
+        run: |
+          docker run --rm -v "$PWD/k8s:/k8s" ghcr.io/yannh/kubeconform:v0.6.7 \
+            -strict -summary -ignore-missing-schemas /k8s
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with: 
-          python-version: '3.11'
-
-      - name: Install dependencies
-        run: pip install -r backend/requirements.txt
-
-      - name: Run backend tests
-        env:
-          PYTHONPATH: backend
-          DB_URL: "postgresql://quantix:secret@host.docker.internal:5432/quantix"
-          SECRET_KEY: "b0d7131c028d602e415a87456198c11c69d3ff2f0e1672141c0b926f18080657"
-        run: pytest backend/tests/
-
-  frontend-test:
-
-    runs-on: ubuntu-latest
-
-    steps:
-
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
+      - name: Start minikube
+        uses: medyagh/setup-minikube@v0.0.19   # проверь актуальный релиз и закрепи версию
         with:
-          node-version: '20'
+          driver: docker
 
-      - name: Install dependencies
-        run: npm install --prefix frontend
+      - name: Build images inside minikube
+        run: |
+          eval "$(minikube docker-env)"
+          docker build -t quantix-backend:ci backend
+          docker build -t quantix-frontend:ci \
+            --build-arg NEXT_PUBLIC_API_URL=http://api.quantix.local frontend
 
-      - name: Run frontend tests
-        run: npm test --prefix frontend
+      - name: Deploy
+        run: |
+          cp -r k8s /tmp/k8s
+          sed -i -E 's|image: quantix-backend:.*|image: quantix-backend:ci|'   /tmp/k8s/10-backend.yaml
+          sed -i -E 's|image: quantix-frontend:.*|image: quantix-frontend:ci|' /tmp/k8s/20-frontend.yaml
+
+          kubectl apply -f /tmp/k8s/00-namespace.yaml
+          kubectl apply -f /tmp/k8s/05-resourcequota.yaml
+          kubectl create secret generic postgres-credentials -n quantix \
+            --from-literal=POSTGRES_PASSWORD=quantix
+
+          kubectl apply -f /tmp/k8s/30-postgress.yaml
+          kubectl rollout status deploy/postgres -n quantix --timeout=180s
+          kubectl apply -f /tmp/k8s/10-backend.yaml
+          kubectl rollout status deploy/backend -n quantix --timeout=240s
+          kubectl apply -f /tmp/k8s/20-frontend.yaml
+          kubectl rollout status deploy/frontend -n quantix --timeout=180s
+
+      - name: Smoke test
+        run: |
+          kubectl port-forward -n quantix svc/backend-service 8000:8000 &
+          kubectl port-forward -n quantix svc/frontend-service 3000:3000 &
+          sleep 5
+          curl -fsS http://localhost:8000/health
+          curl -fsSI http://localhost:3000/
+
+      - name: Debug on failure
+        if: failure()
+        run: |
+          kubectl get pods,events -n quantix
+          kubectl logs -n quantix -l app=backend --tail=50 --all-containers || true
